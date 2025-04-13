@@ -1,24 +1,25 @@
 <template>
-  <div id="app">
-    <h1></h1>
-    <MyGame />
+  <div>
+    <Game />
   </div>
 </template>
 
 <script>
-import MyGame from './components/MyGame.vue';
+import Game from './components/Game.vue';
 
 export default {
   name: 'App',
   components: {
-    MyGame,
+    Game,
   },
 };
 </script>
 
 <style>
-#app {
-  text-align: center;
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+/* Estilos opcionales */
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 </style>
