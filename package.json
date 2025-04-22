@@ -1,5 +1,5 @@
 {
-  "name": "phaser-ericortgis",
+  "name": "mi-juego",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,10 +7,12 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "phaser": "^3.88.2",
-    "vue": "^3.2.13"
+    "core-js": "^3.6.5",
+    "phaser": "^3.55.2",
+    "vue": "^3.0.0"
   },
   "devDependencies": {
-    "@vue/cli-service": "~5.0.0"
+    "@vue/cli-service": "~4.5.0",
+    "@vue/compiler-sfc": "^3.0.0"
   }
 }
