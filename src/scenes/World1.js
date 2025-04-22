@@ -13,39 +13,46 @@ export default class World1 extends Phaser.Scene {
     });
     this.load.image('background', 'assets/background/sky.png');
     this.load.image('coin', 'assets/coin.png');
-    this.load.audio('walk', 'assets/sounds/walk.mp3'); // Ensure this path is correct
+    this.load.audio('walk', 'assets/sounds/walk.mp3');
   }
 
   create() {
-    // Agregar fondo
-    this.add.image(400, 300, 'background').setDisplaySize(800, 600);
+    // Configurar mundo más grande
+    this.physics.world.setBounds(0, 0, 2000, 600);
+
+    // Agregar fondo (escalado para cubrir el mundo)
+    this.add.image(1000, 300, 'background').setDisplaySize(2000, 600);
 
     // Habilitar físicas Arcade
     this.physics.world.gravity.y = 1000;
 
     // Crear el jugador
-    this.player = this.physics.add.sprite(100, 450, 'player', 0); // Frame 0 (estático)
-    this.player.setDisplaySize(64, 64);
+    this.player = this.physics.add.sprite(100, 450, 'player', 0);
+    this.player.body.setSize(64, 64);
+    // this.player.setDisplaySize(64, 64); // Comentado para evitar problemas de corte
     this.player.setCollideWorldBounds(true);
+
+    // Hacer que la cámara siga al jugador
+    this.cameras.main.startFollow(this.player);
+    this.cameras.main.setBounds(0, 0, 2000, 600);
 
     // Crear animación de caminar
     this.anims.create({
       key: 'walk',
-      frames: this.anims.generateFrameNumbers('player', { start: 1, end: 5 }), // Frames 1-5
-      frameRate: 10, // 10 frames por segundo
-      repeat: -1, // Repetir en bucle
+      frames: this.anims.generateFrameNumbers('player', { start: 1, end: 5 }),
+      frameRate: 10,
+      repeat: -1,
     });
 
-    
     // Configurar audio de pasos
     this.walkSound = this.sound.add('walk', {
       loop: true,
       volume: 0.5,
-    }); // Ensure the audio key matches the preloaded key
+    });
 
-    // Crear el suelo (transparente y delgado)
+    // Crear el suelo (transparente, extendido a 2000 píxeles)
     const ground = this.physics.add.staticGroup();
-    const groundSprite = ground.create(400, 595, null).setDisplaySize(800, 10).refreshBody();
+    const groundSprite = ground.create(1000, 590, null).setDisplaySize(2000, 10).refreshBody();
     groundSprite.setAlpha(0);
 
     // Colisiones entre jugador y suelo
@@ -62,29 +69,51 @@ export default class World1 extends Phaser.Scene {
     // Sistema de vidas
     this.lives = 3;
     this.livesText = this.add.text(16, 16, `Vidas: ${this.lives}`, {
-      fontSize: '24px',
-      color: '#ffffff',
-    });
+      fontFamily: '"Press Start 2P"',
+      fontSize: '32px',
+      color: '#ffff00', // Amarillo vibrante
+      stroke: '#000000', // Borde negro
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 4,
+        stroke: true,
+        fill: true,
+      },
+    }).setScrollFactor(0);
 
     // Mostrar vidas gráficamente (círculos blancos)
     this.livesIcons = [];
     for (let i = 0; i < this.lives; i++) {
-      const lifeIcon = this.add.circle(80 + i * 40, 40, 10, 0xffffff);
+      const lifeIcon = this.add.circle(80 + i * 40, 40, 10, 0xffffff).setScrollFactor(0);
       this.livesIcons.push(lifeIcon);
     }
 
     // Sistema de recolección de objetos
     this.score = 0;
     this.scoreText = this.add.text(16, 50, `Puntuación: ${this.score}`, {
-      fontSize: '24px',
-      color: '#ffffff',
-    });
+      fontFamily: '"Press Start 2P"',
+      fontSize: '32px',
+      color: '#ffff00', // Amarillo vibrante
+      stroke: '#000000', // Borde negro
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 4,
+        stroke: true,
+        fill: true,
+      },
+    }).setScrollFactor(0);
 
     // Crear grupo de objetos recolectables
     this.collectibles = this.physics.add.group();
-    this.collectibles.create(150, 450, 'coin').setDisplaySize(20, 20);
-    this.collectibles.create(250, 400, 'coin').setDisplaySize(20, 20);
-    this.collectibles.create(350, 450, 'coin').setDisplaySize(20, 20);
+    this.collectibles.create(200, 450, 'coin').setDisplaySize(20, 20);
+    this.collectibles.create(800, 400, 'coin').setDisplaySize(20, 20);
+    this.collectibles.create(1400, 450, 'coin').setDisplaySize(20, 20);
 
     // Configurar monedas
     this.collectibles.children.iterate((coin) => {
@@ -100,6 +129,9 @@ export default class World1 extends Phaser.Scene {
       null,
       this
     );
+
+    // Inicializar bandera de movimiento
+    this.isMoving = false;
   }
 
   collectObject(player, collectible) {
@@ -108,7 +140,7 @@ export default class World1 extends Phaser.Scene {
     this.scoreText.setText(`Puntuación: ${this.score}`);
   }
 
-update() {
+  update() {
     // Movimiento horizontal
     if (this.keys.left.isDown) {
       this.player.setVelocityX(-200);
@@ -116,7 +148,7 @@ update() {
       this.player.setFlipX(true);
       if (!this.isMoving) {
         this.isMoving = true;
-        this.walkSound.play(); // Iniciar audio
+        this.walkSound.play();
       }
     } else if (this.keys.right.isDown) {
       this.player.setVelocityX(200);
@@ -124,7 +156,7 @@ update() {
       this.player.setFlipX(false);
       if (!this.isMoving) {
         this.isMoving = true;
-        this.walkSound.play(); // Iniciar audio
+        this.walkSound.play();
       }
     } else {
       this.player.setVelocityX(0);
@@ -132,7 +164,7 @@ update() {
       this.player.setTexture('player', 0);
       if (this.isMoving) {
         this.isMoving = false;
-        this.walkSound.stop(); // Detener audio
+        this.walkSound.stop();
       }
     }
 
