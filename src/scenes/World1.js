@@ -50,7 +50,7 @@ export default class World1 extends Phaser.Scene {
       const enemy1 = this.enemies.create(500, 450, null);
       enemy1.setTint(0xff0000);
       enemy1.setDisplaySize(64, 64);
-      enemy1.body.setSize(64, 64);
+      enemy1.body.setSize(40, 40);
       enemy1.setCollideWorldBounds(true);
       enemy1.setVelocityX(100);
       enemy1.direction = 1;
@@ -61,7 +61,7 @@ export default class World1 extends Phaser.Scene {
       const enemy2 = this.enemies.create(1850, 450, null);
       enemy2.setTint(0xff0000);
       enemy2.setDisplaySize(64, 64);
-      enemy2.body.setSize(64, 64);
+      enemy2.body.setSize(40, 40);
       enemy2.setCollideWorldBounds(true);
       enemy2.setVelocityX(100);
       enemy2.direction = 1;
@@ -81,10 +81,10 @@ export default class World1 extends Phaser.Scene {
 
       // Crear plataformas para parkour (transparente)
       const platforms = this.physics.add.staticGroup();
-      platforms.create(700, 450, null).setDisplaySize(100, 10).refreshBody().setAlpha(0);
-      platforms.create(850, 350, null).setDisplaySize(100, 10).refreshBody().setAlpha(0);
-      platforms.create(1000, 250, null).setDisplaySize(100, 10).refreshBody().setAlpha(0);
-      platforms.create(1150, 150, null).setDisplaySize(100, 10).refreshBody().setAlpha(0);
+      platforms.create(700, 450, null).setDisplaySize(100, 10).refreshBody().setTint(0x00ff00).setAlpha(0.7);
+      platforms.create(850, 350, null).setDisplaySize(100, 10).refreshBody().setTint(0x00ff00).setAlpha(0.7);
+      platforms.create(1000, 250, null).setDisplaySize(100, 10).refreshBody().setTint(0x00ff00).setAlpha(0.7);
+      platforms.create(1150, 150, null).setDisplaySize(100, 10).refreshBody().setTint(0x00ff00).setAlpha(0.7);
 
       // Colisiones
       this.physics.add.collider(this.player, ground);
@@ -204,6 +204,15 @@ export default class World1 extends Phaser.Scene {
       this.portal.setDisplaySize(50, 50);
       this.portal.body.setAllowGravity(false);
 
+      // Añadir efecto de parpadeo al portal
+      this.tweens.add({
+        targets: this.portal,
+        alpha: 0.5,
+        duration: 1000,
+        yoyo: true,
+        repeat: -1
+      });
+
       // Colisión con el portal
       this.physics.add.overlap(this.player, this.portal, this.handlePortal, null, this);
 
@@ -318,7 +327,19 @@ export default class World1 extends Phaser.Scene {
   }
 
   handlePortal(player, portal) {
-    console.log('Portal tocado');
+    // Efecto visual al tocar el portal
+    this.cameras.main.flash(500, 255, 255, 255);
+    
+    // Guardar datos del jugador
+    this.game.registry.set('playerData', {
+      lives: this.lives,
+      volatileLife: this.volatileLife,
+      inventory: this.inventory,
+      score: this.score
+    });
+    
+    // Cambiar a la escena World2
+    this.scene.start('World2');
   }
 
   update() {
@@ -373,7 +394,7 @@ export default class World1 extends Phaser.Scene {
     this.enemies.getChildren().forEach((enemy) => {
       if (enemy.active) {
         const distanceToPlayer = Math.abs(this.player.x - enemy.x);
-        const aggroRange = 200;
+        const aggroRange = 300;
 
         if (distanceToPlayer <= aggroRange) {
           enemy.isAggro = true;

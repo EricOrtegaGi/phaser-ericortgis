@@ -6,9 +6,15 @@
 import Phaser from 'phaser';
 import MainMenu from '../scenes/MainMenu';
 import World1 from '../scenes/World1';
+import World2 from '../scenes/World2';
 
 export default {
   name: 'Game',
+  data() {
+    return {
+      game: null,
+    };
+  },
   mounted() {
     const config = {
       type: Phaser.AUTO,
@@ -19,10 +25,10 @@ export default {
         default: 'arcade',
         arcade: {
           gravity: { y: 0 },
-          debug: true, // Habilitar depuración
+          debug: false, // Habilitar depuración
         },
       },
-      scene: [MainMenu, World1],
+      scene: [MainMenu, World1, World2],
     };
 
     new Phaser.Game(config);
