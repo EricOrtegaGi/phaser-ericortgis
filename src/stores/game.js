@@ -7,7 +7,8 @@ export const useGameStore = defineStore('game', {
     currentWorld: 1,
     playerLives: 3,
     gameState: 'menu', // menu, playing, paused, gameOver
-    highScores: []
+    highScores: [],
+    savedGames: [] // Array para almacenar múltiples partidas guardadas
   }),
 
   getters: {
@@ -18,6 +19,10 @@ export const useGameStore = defineStore('game', {
       const minutes = Math.floor(state.time / 60)
       const seconds = state.time % 60
       return `${minutes}:${seconds.toString().padStart(2, '0')}`
+    },
+    // Obtener las partidas guardadas ordenadas por fecha
+    sortedSavedGames: (state) => {
+      return [...state.savedGames].sort((a, b) => new Date(b.date) - new Date(a.date))
     }
   },
 
@@ -70,6 +75,63 @@ export const useGameStore = defineStore('game', {
 
     changeWorld(worldNumber) {
       this.currentWorld = worldNumber
+    },
+
+    // Guardar el estado actual del juego
+    saveGame(playerData) {
+      const gameState = {
+        score: this.score,
+        time: this.time,
+        currentWorld: this.currentWorld,
+        playerLives: this.playerLives,
+        playerData: playerData,
+        date: new Date().toISOString()
+      }
+      
+      // Agregar a las partidas guardadas
+      this.savedGames.push(gameState)
+      
+      // Mantener solo las últimas 5 partidas guardadas
+      if (this.savedGames.length > 5) {
+        this.savedGames = this.savedGames.slice(-5)
+      }
+      
+      // Guardar en localStorage
+      localStorage.setItem('savedGames', JSON.stringify(this.savedGames))
+    },
+
+    // Cargar una partida guardada
+    loadGame(index) {
+      if (index >= 0 && index < this.savedGames.length) {
+        const gameState = this.savedGames[index]
+        this.score = gameState.score
+        this.time = gameState.time
+        this.currentWorld = gameState.currentWorld
+        this.playerLives = gameState.playerLives
+        return gameState.playerData
+      }
+      return null
+    },
+
+    // Eliminar una partida guardada
+    deleteSavedGame(index) {
+      if (index >= 0 && index < this.savedGames.length) {
+        this.savedGames.splice(index, 1)
+        localStorage.setItem('savedGames', JSON.stringify(this.savedGames))
+      }
+    },
+
+    // Cargar las partidas guardadas desde localStorage
+    loadSavedGames() {
+      const savedGames = localStorage.getItem('savedGames')
+      if (savedGames) {
+        try {
+          this.savedGames = JSON.parse(savedGames)
+        } catch (error) {
+          console.error('Error al cargar las partidas guardadas:', error)
+          this.savedGames = []
+        }
+      }
     }
   }
 }) 
