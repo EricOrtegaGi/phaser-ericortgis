@@ -13,7 +13,7 @@ export default class MainMenu extends Phaser.Scene {
     this.add.text(
       this.cameras.main.centerX,
       100,
-      'Mi Juego',
+      '',
       { fontSize: '64px', color: '#ffffff' }
     ).setOrigin(0.5);
 

@@ -1,15 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <link rel="icon" href="<%= BASE_URL %>favicon.ico" />
-    <title>Mi Juego</title>
+    <title>Phaser Game</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Un emocionante juego desarrollado con Phaser y Vue.js. Disfruta de una experiencia de juego única con gráficos impresionantes y jugabilidad adictiva." />
+    <meta name="keywords" content="phaser, vue, juego, videojuego, javascript, html5" />
+    <meta name="author" content="Tu Nombre" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Preload de recursos críticos -->
+    <link rel="preload" href="<%= BASE_URL %>assets/background/sky.png" as="image" />
+    <link rel="preload" href="<%= BASE_URL %>assets/player/phaser-dude.png" as="image" />
+    <link rel="preload" href="<%= BASE_URL %>assets/player/spritesheet.png" as="image" />
+    
+    <!-- Prefetch de recursos importantes -->
+    <link rel="prefetch" href="<%= BASE_URL %>assets/sounds/walk.mp3" />
   </head>
   <body>
     <noscript>
-      <strong>We're sorry but this app doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+      <strong>Lo sentimos, pero este juego no funciona correctamente sin JavaScript habilitado. Por favor, actívalo para continuar.</strong>
     </noscript>
     <div id="app"></div>
     <!-- built files will be auto injected -->

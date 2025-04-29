@@ -1,25 +1,28 @@
 <template>
-  <div>
-    <Game />
+  <div id="app">
+    <router-view />
   </div>
 </template>
 
 <script>
-import Game from './components/Game.vue';
-
 export default {
-  name: 'App',
-  components: {
-    Game,
-  },
-};
+  name: 'App'
+}
 </script>
 
 <style>
-/* Estilos opcionales */
 body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  background-color: #000;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
