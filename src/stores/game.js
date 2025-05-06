@@ -1,54 +1,102 @@
 import { defineStore } from 'pinia'
 
+// Tipos para el estado del juego
+const GameState = {
+  MENU: 'menu',
+  PLAYING: 'playing',
+  PAUSED: 'paused',
+  GAME_OVER: 'gameOver'
+}
+
+// Interfaz para el estado del juego
+const initialState = {
+  score: 0,
+  time: 0,
+  currentWorld: 1,
+  playerLives: 3,
+  gameState: GameState.MENU,
+  highScores: [],
+  savedGames: [],
+  settings: {
+    soundEnabled: true,
+    musicEnabled: true,
+    difficulty: 'normal'
+  }
+}
+
+// Función para cargar el estado inicial desde localStorage
+const loadInitialState = () => {
+  const savedState = localStorage.getItem('gameState')
+  if (savedState) {
+    try {
+      const parsed = JSON.parse(savedState)
+      return {
+        ...initialState,
+        ...parsed,
+        gameState: GameState.MENU // Siempre empezamos en el menú
+      }
+    } catch (error) {
+      console.error('Error loading saved state:', error)
+      return initialState
+    }
+  }
+  return initialState
+}
+
 export const useGameStore = defineStore('game', {
-  state: () => ({
-    score: 0,
-    time: 0,
-    currentWorld: 1,
-    playerLives: 3,
-    gameState: 'menu', // menu, playing, paused, gameOver
-    highScores: [],
-    savedGames: [] // Array para almacenar múltiples partidas guardadas
-  }),
+  state: () => loadInitialState(),
 
   getters: {
-    isGameOver: (state) => state.gameState === 'gameOver',
-    isPlaying: (state) => state.gameState === 'playing',
-    isPaused: (state) => state.gameState === 'paused',
+    isGameOver: (state) => state.gameState === GameState.GAME_OVER,
+    isPlaying: (state) => state.gameState === GameState.PLAYING,
+    isPaused: (state) => state.gameState === GameState.PAUSED,
     formattedTime: (state) => {
       const minutes = Math.floor(state.time / 60)
       const seconds = state.time % 60
       return `${minutes}:${seconds.toString().padStart(2, '0')}`
     },
-    // Obtener las partidas guardadas ordenadas por fecha
     sortedSavedGames: (state) => {
       return [...state.savedGames].sort((a, b) => new Date(b.date) - new Date(a.date))
     }
   },
 
   actions: {
+    // Guardar el estado actual en localStorage
+    saveState() {
+      const stateToSave = {
+        highScores: this.highScores,
+        savedGames: this.savedGames,
+        settings: this.settings
+      }
+      localStorage.setItem('gameState', JSON.stringify(stateToSave))
+    },
+
     startGame() {
       this.score = 0
       this.time = 0
       this.playerLives = 3
-      this.gameState = 'playing'
+      this.gameState = GameState.PLAYING
+      this.saveState()
     },
 
     pauseGame() {
-      this.gameState = 'paused'
+      this.gameState = GameState.PAUSED
+      this.saveState()
     },
 
     resumeGame() {
-      this.gameState = 'playing'
+      this.gameState = GameState.PLAYING
     },
 
     gameOver() {
-      this.gameState = 'gameOver'
+      this.gameState = GameState.GAME_OVER
       this.saveHighScore()
+      this.saveState()
     },
 
     incrementScore(points) {
       this.score += points
+      this.saveState()
     },
 
     decrementLives() {
@@ -56,28 +104,32 @@ export const useGameStore = defineStore('game', {
       if (this.playerLives <= 0) {
         this.gameOver()
       }
+      this.saveState()
     },
 
     updateTime(seconds) {
       this.time = seconds
+      this.saveState()
     },
 
     saveHighScore() {
-      this.highScores.push({
+      const newScore = {
         score: this.score,
         time: this.time,
         date: new Date().toISOString()
-      })
-      // Ordenar por puntuación descendente y mantener solo los 10 mejores
+      }
+      
+      this.highScores.push(newScore)
       this.highScores.sort((a, b) => b.score - a.score)
       this.highScores = this.highScores.slice(0, 10)
+      this.saveState()
     },
 
     changeWorld(worldNumber) {
       this.currentWorld = worldNumber
+      this.saveState()
     },
 
-    // Guardar el estado actual del juego
     saveGame(playerData) {
       const gameState = {
         score: this.score,
@@ -88,19 +140,14 @@ export const useGameStore = defineStore('game', {
         date: new Date().toISOString()
       }
       
-      // Agregar a las partidas guardadas
       this.savedGames.push(gameState)
-      
-      // Mantener solo las últimas 5 partidas guardadas
       if (this.savedGames.length > 5) {
         this.savedGames = this.savedGames.slice(-5)
       }
       
-      // Guardar en localStorage
-      localStorage.setItem('savedGames', JSON.stringify(this.savedGames))
+      this.saveState()
     },
 
-    // Cargar una partida guardada
     loadGame(index) {
       if (index >= 0 && index < this.savedGames.length) {
         const gameState = this.savedGames[index]
@@ -108,30 +155,23 @@ export const useGameStore = defineStore('game', {
         this.time = gameState.time
         this.currentWorld = gameState.currentWorld
         this.playerLives = gameState.playerLives
+        this.gameState = GameState.PLAYING
+        this.saveState()
         return gameState.playerData
       }
       return null
     },
 
-    // Eliminar una partida guardada
     deleteSavedGame(index) {
       if (index >= 0 && index < this.savedGames.length) {
         this.savedGames.splice(index, 1)
-        localStorage.setItem('savedGames', JSON.stringify(this.savedGames))
+        this.saveState()
       }
     },
 
-    // Cargar las partidas guardadas desde localStorage
-    loadSavedGames() {
-      const savedGames = localStorage.getItem('savedGames')
-      if (savedGames) {
-        try {
-          this.savedGames = JSON.parse(savedGames)
-        } catch (error) {
-          console.error('Error al cargar las partidas guardadas:', error)
-          this.savedGames = []
-        }
-      }
+    updateSettings(newSettings) {
+      this.settings = { ...this.settings, ...newSettings }
+      this.saveState()
     }
   }
 }) 

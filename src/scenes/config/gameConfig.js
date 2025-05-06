@@ -1,5 +1,4 @@
 import Phaser from 'phaser'
-import MainMenu from '../ui/MainMenu'
 import World1 from '../levels/World1'
 import World2 from '../levels/World2'
 
@@ -14,7 +13,7 @@ export const PHYSICS_CONFIG = {
   }
 }
 
-export const SCENES = [MainMenu, World1, World2]
+export const SCENES = [World1, World2]
 
 export const createGameConfig = (containerId) => ({
   type: Phaser.AUTO,

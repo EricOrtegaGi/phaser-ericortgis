@@ -1,14 +1,15 @@
 <template>
-  <div class="start-menu">
-    <h1>¿?</h1>
+  <div class="start-menu slide-in-top">
+    <h1 class="fade-in">¿?</h1>
     <div class="menu-buttons">
-      <button @click="startGame" class="start-button">Iniciar Juego</button>
-      <button @click="showInstructions" class="instructions-button">Instrucciones</button>
+      <button @click="goToMainMenu" class="start-button hover-scale hover-glow">Jugar</button>
+      <button @click="showInstructions" class="instructions-button hover-scale hover-glow">Instrucciones</button>
+      <button @click="goToSettings" class="settings-button hover-scale hover-glow">Ajustes</button>
     </div>
-    <div v-if="highScores.length > 0" class="high-scores">
+    <div v-if="highScores.length > 0" class="high-scores fade-in">
       <h2>Mejores Puntuaciones</h2>
       <ul>
-        <li v-for="(score, index) in highScores" :key="index">
+        <li v-for="(score, index) in highScores" :key="index" class="score-item">
           {{ score.score }} puntos - {{ formatDate(score.date) }}
         </li>
       </ul>
@@ -32,9 +33,11 @@ export default {
     }
   },
   methods: {
-    startGame() {
-      this.gameStore.startGame()
-      this.$router.push('/game')
+    goToMainMenu() {
+      this.$router.push('/main')
+    },
+    goToSettings() {
+      this.$router.push('/settings')
     },
     showInstructions() {
       alert('Instrucciones del juego:\n1. Usa las flechas para moverte\n2. Recolecta todos los objetos\n3. Evita los obstáculos')
@@ -54,12 +57,14 @@ export default {
   background-color: rgba(0, 0, 0, 0.8);
   border-radius: 10px;
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  animation: slideInFromTop 0.5s ease-out;
 }
 
 h1 {
   font-size: 3rem;
   margin-bottom: 2rem;
   text-shadow: 0 0 10px #00ffff;
+  animation: fadeIn 1s ease-out;
 }
 
 .menu-buttons {
@@ -86,10 +91,18 @@ button:hover {
 
 .start-button {
   background-color: #00ff00;
+  animation: buttonGlow 2s infinite;
 }
 
 .instructions-button {
   background-color: #ffff00;
+  animation: buttonGlow 2s infinite;
+}
+
+.settings-button {
+  background-color: #00ffff;
+  color: #000;
+  animation: buttonGlow 2s infinite;
 }
 
 .high-scores {
@@ -97,6 +110,7 @@ button:hover {
   padding: 1rem;
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 5px;
+  animation: fadeIn 0.5s ease-out;
 }
 
 .high-scores h2 {
@@ -110,8 +124,26 @@ button:hover {
   padding: 0;
 }
 
-.high-scores li {
+.score-item {
   margin: 0.5rem 0;
   color: #fff;
+  transition: all 0.3s ease;
 }
+
+.score-item:hover {
+  transform: scale(1.05);
+  color: #00ffff;
+}
+
+/* Animaciones para los elementos de la lista */
+.score-item {
+  animation: fadeIn 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.score-item:nth-child(1) { animation-delay: 0.1s; }
+.score-item:nth-child(2) { animation-delay: 0.2s; }
+.score-item:nth-child(3) { animation-delay: 0.3s; }
+.score-item:nth-child(4) { animation-delay: 0.4s; }
+.score-item:nth-child(5) { animation-delay: 0.5s; }
 </style>
