@@ -30,6 +30,7 @@ const loadInitialState = () => {
   if (savedState) {
     try {
       const parsed = JSON.parse(savedState)
+      console.log('Estado cargado:', parsed)
       return {
         ...initialState,
         ...parsed,
@@ -40,6 +41,7 @@ const loadInitialState = () => {
       return initialState
     }
   }
+  console.log('No hay estado guardado, usando estado inicial')
   return initialState
 }
 
@@ -63,12 +65,24 @@ export const useGameStore = defineStore('game', {
   actions: {
     // Guardar el estado actual en localStorage
     saveState() {
+      console.log('Guardando estado en localStorage...')
       const stateToSave = {
+        score: this.score,
+        time: this.time,
+        currentWorld: this.currentWorld,
+        playerLives: this.playerLives,
+        gameState: this.gameState,
         highScores: this.highScores,
         savedGames: this.savedGames,
         settings: this.settings
       }
-      localStorage.setItem('gameState', JSON.stringify(stateToSave))
+      console.log('Estado a guardar:', stateToSave)
+      try {
+        localStorage.setItem('gameState', JSON.stringify(stateToSave))
+        console.log('Estado guardado correctamente')
+      } catch (error) {
+        console.error('Error al guardar estado:', error)
+      }
     },
 
     startGame() {
@@ -131,21 +145,37 @@ export const useGameStore = defineStore('game', {
     },
 
     saveGame(playerData) {
+      console.log('Guardando partida con datos:', playerData)
+      
       const gameState = {
-        score: this.score,
+        score: playerData.score || this.score,
         time: this.time,
         currentWorld: this.currentWorld,
-        playerLives: this.playerLives,
-        playerData: playerData,
+        playerLives: playerData.lives || this.playerLives,
+        playerData: {
+          x: playerData.x,
+          y: playerData.y,
+          score: playerData.score || this.score,
+          lives: playerData.lives || this.playerLives,
+          volatileLife: playerData.volatileLife || 0,
+          inventory: playerData.inventory || { potion: 0 }
+        },
         date: new Date().toISOString()
       }
       
-      this.savedGames.push(gameState)
+      // Añadir la nueva partida al array de partidas guardadas
+      this.savedGames = [...this.savedGames, gameState]
+      
+      // Mantener solo las 5 partidas más recientes
       if (this.savedGames.length > 5) {
         this.savedGames = this.savedGames.slice(-5)
       }
       
+      // Guardar en localStorage
       this.saveState()
+      
+      console.log('Partida guardada:', gameState)
+      console.log('Partidas guardadas:', this.savedGames)
     },
 
     loadGame(index) {

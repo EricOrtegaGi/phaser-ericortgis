@@ -1,10 +1,15 @@
 <template>
   <div class="game-wrapper">
     <div id="game-container"></div>
-    <div v-if="isPaused" class="pause-overlay">
+    <div v-if="showPause" class="pause-overlay">
       <div class="pause-menu">
         <h2>Juego Pausado</h2>
         <button @click="resumeGame" class="btn btn-primary">Continuar</button>
+        <button @click="saveGame" class="btn btn-secondary">Guardar</button>
+        <button @click="toggleMute" class="btn btn-secondary">
+          <span v-if="isMuted">Activar Sonido</span>
+          <span v-else>Mutear</span>
+        </button>
         <button @click="exitGame" class="btn btn-secondary">Salir al Menú</button>
       </div>
     </div>
@@ -27,42 +32,33 @@ export default {
   name: 'Game',
   setup() {
     const gameStore = useGameStore()
-    const { isPaused } = storeToRefs(gameStore)
-    return { isPaused }
+    const { isPaused, settings } = storeToRefs(gameStore)
+    return { isPaused, settings, gameStore }
   },
   data() {
     return {
       game: null,
       loadingProgress: 0,
       isLoading: true,
-      preloadComplete: false
+      preloadComplete: false,
+      showPause: false,
+      isMuted: false
     }
   },
   methods: {
     async initGame() {
-      if (this.game) return
+      // Destruir el juego existente si hay uno
+      this.destroyGame()
       
       try {
         this.isLoading = true
         this.loadingProgress = 0
-        
-        // Crear configuración del juego
         const config = createGameConfig('game-container')
-        
-        // Añadir eventos de precarga
         config.callbacks = {
-          preBoot: () => {
-            this.loadingProgress = 20
-          },
-          postBoot: () => {
-            this.loadingProgress = 40
-          }
+          preBoot: () => { this.loadingProgress = 20 },
+          postBoot: () => { this.loadingProgress = 40 }
         }
-        
-        // Crear instancia del juego
         this.game = new Phaser.Game(config)
-        
-        // Esperar a que el juego esté listo
         await new Promise(resolve => {
           this.game.events.once('ready', () => {
             this.loadingProgress = 100
@@ -71,61 +67,96 @@ export default {
             resolve()
           })
         })
+        this.applyMute()
       } catch (error) {
         console.error('Error initializing game:', error)
         this.isLoading = false
         this.destroyGame()
       }
     },
-    
     destroyGame() {
       if (!this.game) return
-      
-      // Limpiar eventos
       this.game.events.removeAllListeners()
-      
-      // Destruir escenas
       this.game.scene.scenes.forEach(scene => {
-        if (scene.scene.isActive()) {
-          scene.scene.stop()
-        }
+        if (scene.scene.isActive()) scene.scene.stop()
         scene.scene.remove()
       })
-      
-      // Destruir el juego
       this.game.destroy(true)
       this.game = null
-      
-      // Limpiar el contenedor
       const container = document.getElementById('game-container')
-      if (container) {
-        container.innerHTML = ''
-      }
-      
-      // Resetear estado
+      if (container) container.innerHTML = ''
       this.preloadComplete = false
       this.loadingProgress = 0
     },
-    
     resumeGame() {
       if (!this.game) return
-      
+      this.showPause = false
       const currentScene = this.game.scene.scenes.find(scene => scene.scene.isPaused())
+      if (currentScene) currentScene.scene.resume()
+    },
+    saveGame() {
+      console.log('Intentando guardar partida...')
+      console.log('Todas las escenas:', this.game.scene.scenes)
+      // Buscar escena activa o pausada
+      const currentScene = this.game.scene.scenes.find(
+        scene => scene.scene.isActive() || scene.scene.isPaused()
+      )
+      console.log('Escena actual:', currentScene)
       if (currentScene) {
-        currentScene.scene.resume()
+        // Guardar el estado del jugador
+        const playerData = {
+          x: currentScene.player.x,
+          y: currentScene.player.y,
+          score: currentScene.score,
+          lives: currentScene.lives,
+          volatileLife: currentScene.volatileLife,
+          inventory: currentScene.inventory
+        }
+        console.log('Datos del jugador a guardar:', playerData)
+        // Guardar el estado del juego
+        this.gameStore.saveGame(playerData)
+        // Mostrar mensaje de confirmación
+        alert('Partida guardada correctamente')
+      } else {
+        console.error('No se encontró la escena actual')
+      }
+      this.showPause = false
+    },
+    toggleMute() {
+      this.isMuted = !this.isMuted
+      this.applyMute()
+      this.gameStore.updateSettings({ soundEnabled: !this.isMuted })
+    },
+    applyMute() {
+      if (this.game && this.game.sound) {
+        this.game.sound.mute = this.isMuted
       }
     },
-    
     exitGame() {
       this.destroyGame()
       this.$router.push('/')
+    },
+    handleKeydown(e) {
+      if (e.key === 'Escape') {
+        this.showPause = !this.showPause
+        if (this.showPause && this.game) {
+          const currentScene = this.game.scene.scenes.find(scene => scene.scene.isActive())
+          if (currentScene) currentScene.scene.pause()
+        } else if (!this.showPause) {
+          this.resumeGame()
+        }
+      }
     }
   },
   mounted() {
     this.initGame()
+    window.addEventListener('keydown', this.handleKeydown)
+    // Sincronizar mute con ajustes
+    this.isMuted = !this.settings.soundEnabled
   },
   beforeUnmount() {
     this.destroyGame()
+    window.removeEventListener('keydown', this.handleKeydown)
   }
 }
 </script>
