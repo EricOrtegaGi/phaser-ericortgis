@@ -17,13 +17,6 @@ export default class World1 extends Phaser.Scene {
 
   create() {
     try {
-      // Inicializar variables del juego
-      this.score = 0;
-      this.lives = 3;
-      this.volatileLife = 0;
-      this.inventory = { potion: 0 };
-      this.maxLives = 3;
-
       // Configurar mundo más grande
       this.physics.world.setBounds(0, 0, 2000, 600);
 
@@ -37,17 +30,6 @@ export default class World1 extends Phaser.Scene {
       this.player = this.physics.add.sprite(100, 450, 'player', 0);
       this.player.body.setSize(64, 64);
       this.player.setCollideWorldBounds(true);
-
-      // Restaurar estado del jugador si existe
-      if (this.gameData && this.gameData.playerData) {
-        const playerData = this.gameData.playerData;
-        this.player.x = playerData.x || 100;
-        this.player.y = playerData.y || 450;
-        this.score = playerData.score || 0;
-        this.lives = playerData.lives || 3;
-        this.volatileLife = playerData.volatileLife || 0;
-        this.inventory = playerData.inventory || { potion: 0 };
-      }
 
       // Hacer que la cámara siga al jugador
       this.cameras.main.startFollow(this.player);
@@ -89,7 +71,7 @@ export default class World1 extends Phaser.Scene {
       // Configurar audio de pasos
       this.walkSound = this.sound.add('walk', {
         loop: true,
-        volume: 0.5,
+        volume: 0.1,
       });
 
       // Crear el suelo (transparente)
@@ -120,6 +102,9 @@ export default class World1 extends Phaser.Scene {
       });
 
       // Sistema de vidas
+      this.lives = 3;
+      this.maxLives = 3;
+      this.volatileLife = 0; // Vida volátil (0 o 1)
       this.livesText = this.add.text(16, 16, `Vidas: ${this.lives}${this.volatileLife ? ' + 1 volátil' : ''}`, {
         fontFamily: '"Press Start 2P"',
         fontSize: '32px',
@@ -144,6 +129,7 @@ export default class World1 extends Phaser.Scene {
       }
 
       // Sistema de recolección de objetos
+      this.score = 0;
       this.scoreText = this.add.text(16, 50, `Puntuación: ${this.score}`, {
         fontFamily: '"Press Start 2P"',
         fontSize: '32px',
@@ -161,6 +147,7 @@ export default class World1 extends Phaser.Scene {
       }).setScrollFactor(0);
 
       // Inventario
+      this.inventory = { potion: 0 }; // Para almacenar pociones
       this.inventoryText = this.add.text(16, 84, `Poción: ${this.inventory.potion} [Q para usar]`, {
         fontFamily: '"Press Start 2P"',
         fontSize: '24px',
@@ -343,10 +330,13 @@ export default class World1 extends Phaser.Scene {
     // Efecto visual al tocar el portal
     this.cameras.main.flash(500, 255, 255, 255);
     
+    // Detener el sonido de caminar
+    if (this.walkSound && this.walkSound.isPlaying) {
+      this.walkSound.stop();
+    }
+    
     // Guardar datos del jugador
     this.game.registry.set('playerData', {
-      x: this.player.x,
-      y: this.player.y,
       lives: this.lives,
       volatileLife: this.volatileLife,
       inventory: this.inventory,
@@ -408,18 +398,29 @@ export default class World1 extends Phaser.Scene {
     // Movimiento de los enemigos (patrulla o aggro)
     this.enemies.getChildren().forEach((enemy) => {
       if (enemy.active) {
-        const distanceToPlayer = Math.abs(this.player.x - enemy.x);
+        const dx = this.player.x - enemy.x;
+        const dy = this.player.y - enemy.y;
+        const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
         const aggroRange = 300;
 
         if (distanceToPlayer <= aggroRange) {
-          enemy.isAggro = true;
-          if (this.player.x < enemy.x) {
-            enemy.setVelocityX(-150);
-          } else {
-            enemy.setVelocityX(150);
+          if (!enemy.isAggro) {
+            enemy.isAggro = true;
           }
+          // Perseguir jugador SOLO en X
+          const speed = 150;
+          if (dx < 0) {
+            enemy.setVelocityX(-speed);
+          } else {
+            enemy.setVelocityX(speed);
+          }
+          enemy.setVelocityY(0); // No perseguir en Y
         } else {
-          enemy.isAggro = false;
+          if (enemy.isAggro) {
+            enemy.isAggro = false;
+            enemy.setVelocityY(0);
+          }
+          // Patrulla horizontal
           if (enemy.x >= enemy.patrolBounds.maxX) {
             enemy.direction = -1;
             enemy.setVelocityX(-100);

@@ -4,7 +4,6 @@
     <div class="menu-buttons">
       <button @click="goToMainMenu" class="start-button hover-scale hover-glow">Jugar</button>
       <button @click="showInstructions" class="instructions-button hover-scale hover-glow">Instrucciones</button>
-      <button @click="goToSettings" class="settings-button hover-scale hover-glow">Ajustes</button>
     </div>
     <div v-if="highScores.length > 0" class="high-scores fade-in">
       <h2>Mejores Puntuaciones</h2>
@@ -35,9 +34,6 @@ export default {
   methods: {
     goToMainMenu() {
       this.$router.push('/main')
-    },
-    goToSettings() {
-      this.$router.push('/settings')
     },
     showInstructions() {
       alert('Instrucciones del juego:\n1. Usa las flechas para moverte\n2. Recolecta todos los objetos\n3. Evita los obstáculos')
@@ -96,12 +92,6 @@ button:hover {
 
 .instructions-button {
   background-color: #ffff00;
-  animation: buttonGlow 2s infinite;
-}
-
-.settings-button {
-  background-color: #00ffff;
-  color: #000;
   animation: buttonGlow 2s infinite;
 }
 

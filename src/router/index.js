@@ -3,7 +3,6 @@ import Game from '../components/Game.vue'
 import MainMenu from '../components/MainMenu.vue'
 import StartMenu from '../components/StartMenu.vue'
 import ResultScreen from '../components/ResultScreen.vue'
-import SettingsMenu from '../components/SettingsMenu.vue'
 
 const routes = [
   {
@@ -15,11 +14,6 @@ const routes = [
     path: '/main',
     name: 'MainMenu',
     component: MainMenu
-  },
-  {
-    path: '/settings',
-    name: 'SettingsMenu',
-    component: SettingsMenu
   },
   {
     path: '/game',

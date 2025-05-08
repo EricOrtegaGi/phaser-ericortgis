@@ -46,7 +46,7 @@ export default class World2 extends Phaser.Scene {
       // Configurar audio de pasos
       this.walkSound = this.sound.add('walk', {
         loop: true,
-        volume: 0.5,
+        volume: 0.1,
       });
 
       // Crear el suelo (transparente)
@@ -330,18 +330,29 @@ export default class World2 extends Phaser.Scene {
     // Movimiento de los enemigos (patrulla o aggro)
     this.enemies.getChildren().forEach((enemy) => {
       if (enemy.active) {
-        const distanceToPlayer = Math.abs(this.player.x - enemy.x);
+        const dx = this.player.x - enemy.x;
+        const dy = this.player.y - enemy.y;
+        const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
         const aggroRange = 300;
 
         if (distanceToPlayer <= aggroRange) {
-          enemy.isAggro = true;
-          if (this.player.x < enemy.x) {
-            enemy.setVelocityX(-150);
-          } else {
-            enemy.setVelocityX(150);
+          if (!enemy.isAggro) {
+            enemy.isAggro = true;
           }
+          // Perseguir jugador SOLO en X
+          const speed = 150;
+          if (dx < 0) {
+            enemy.setVelocityX(-speed);
+          } else {
+            enemy.setVelocityX(speed);
+          }
+          enemy.setVelocityY(0); // No perseguir en Y
         } else {
-          enemy.isAggro = false;
+          if (enemy.isAggro) {
+            enemy.isAggro = false;
+            enemy.setVelocityY(0);
+          }
+          // Patrulla horizontal
           if (enemy.x >= enemy.patrolBounds.maxX) {
             enemy.direction = -1;
             enemy.setVelocityX(-100);

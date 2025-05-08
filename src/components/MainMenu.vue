@@ -3,18 +3,6 @@
     <h1 class="fade-in">¿?</h1>
     <div class="menu-buttons">
       <button @click="startGame" class="main-button start hover-scale hover-glow">Nueva Partida</button>
-      <button @click="showLoadGames" class="main-button load hover-scale hover-glow">Cargar Partida</button>
-    </div>
-    <div v-if="showSavedGames" class="saved-games fade-in">
-      <h2>Partidas Guardadas</h2>
-      <ul>
-        <li v-for="(game, index) in savedGames" :key="index" class="saved-game-item">
-          {{ formatSavedGame(game) }}
-          <button @click="loadGame(index)" class="mini-btn">Cargar</button>
-          <button @click="deleteGame(index)" class="mini-btn delete">Eliminar</button>
-        </li>
-      </ul>
-      <button @click="showSavedGames = false" class="mini-btn">Cerrar</button>
     </div>
     <div v-if="highScores.length > 0" class="high-scores fade-in">
       <h2>Mejores Puntuaciones</h2>
@@ -35,17 +23,11 @@ export default {
   name: 'MainMenu',
   setup() {
     const gameStore = useGameStore()
-    const { highScores, savedGames, settings } = storeToRefs(gameStore)
+    const { highScores, settings } = storeToRefs(gameStore)
     return {
       gameStore,
       highScores,
-      savedGames,
       settings
-    }
-  },
-  data() {
-    return {
-      showSavedGames: false
     }
   },
   methods: {
@@ -53,21 +35,8 @@ export default {
       this.gameStore.startGame()
       this.$router.push('/game')
     },
-    showLoadGames() {
-      this.showSavedGames = true
-    },
-    loadGame(index) {
-      this.gameStore.loadGame(index)
-      this.$router.push('/game')
-    },
-    deleteGame(index) {
-      this.gameStore.deleteSavedGame(index)
-    },
     formatDate(dateString) {
       return new Date(dateString).toLocaleDateString()
-    },
-    formatSavedGame(game) {
-      return `Puntos: ${game.score}, Mundo: ${game.currentWorld}, Vidas: ${game.playerLives}, ${this.formatDate(game.date)}`
     }
   }
 }

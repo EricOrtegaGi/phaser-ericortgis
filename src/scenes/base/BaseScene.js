@@ -10,11 +10,6 @@ export class BaseScene extends Phaser.Scene {
   init(data) {
     this.gameData = data
     console.log(`Iniciando escena: ${this.scene.key}`)
-    // Reinicializar controles si ya existen
-    if (this.keys) {
-      this.input.keyboard.removeAllKeys()
-      this.setupKeyboardControls()
-    }
   }
 
   preload() {

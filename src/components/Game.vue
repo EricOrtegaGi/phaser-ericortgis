@@ -5,7 +5,6 @@
       <div class="pause-menu">
         <h2>Juego Pausado</h2>
         <button @click="resumeGame" class="btn btn-primary">Continuar</button>
-        <button @click="saveGame" class="btn btn-secondary">Guardar</button>
         <button @click="toggleMute" class="btn btn-secondary">
           <span v-if="isMuted">Activar Sonido</span>
           <span v-else>Mutear</span>
@@ -26,14 +25,12 @@
 import Phaser from 'phaser'
 import { createGameConfig } from '../scenes/config/gameConfig'
 import { useGameStore } from '../stores/game'
-import { storeToRefs } from 'pinia'
 
 export default {
   name: 'Game',
   setup() {
     const gameStore = useGameStore()
-    const { isPaused, settings } = storeToRefs(gameStore)
-    return { isPaused, settings, gameStore }
+    return { gameStore }
   },
   data() {
     return {
@@ -47,9 +44,7 @@ export default {
   },
   methods: {
     async initGame() {
-      // Destruir el juego existente si hay uno
-      this.destroyGame()
-      
+      if (this.game) return
       try {
         this.isLoading = true
         this.loadingProgress = 0
@@ -64,6 +59,7 @@ export default {
             this.loadingProgress = 100
             this.isLoading = false
             this.preloadComplete = true
+            this.gameStore.startGame()
             resolve()
           })
         })
@@ -87,6 +83,7 @@ export default {
       if (container) container.innerHTML = ''
       this.preloadComplete = false
       this.loadingProgress = 0
+      this.gameStore.pauseGame()
     },
     resumeGame() {
       if (!this.game) return
@@ -94,38 +91,9 @@ export default {
       const currentScene = this.game.scene.scenes.find(scene => scene.scene.isPaused())
       if (currentScene) currentScene.scene.resume()
     },
-    saveGame() {
-      console.log('Intentando guardar partida...')
-      console.log('Todas las escenas:', this.game.scene.scenes)
-      // Buscar escena activa o pausada
-      const currentScene = this.game.scene.scenes.find(
-        scene => scene.scene.isActive() || scene.scene.isPaused()
-      )
-      console.log('Escena actual:', currentScene)
-      if (currentScene) {
-        // Guardar el estado del jugador
-        const playerData = {
-          x: currentScene.player.x,
-          y: currentScene.player.y,
-          score: currentScene.score,
-          lives: currentScene.lives,
-          volatileLife: currentScene.volatileLife,
-          inventory: currentScene.inventory
-        }
-        console.log('Datos del jugador a guardar:', playerData)
-        // Guardar el estado del juego
-        this.gameStore.saveGame(playerData)
-        // Mostrar mensaje de confirmación
-        alert('Partida guardada correctamente')
-      } else {
-        console.error('No se encontró la escena actual')
-      }
-      this.showPause = false
-    },
     toggleMute() {
       this.isMuted = !this.isMuted
       this.applyMute()
-      this.gameStore.updateSettings({ soundEnabled: !this.isMuted })
     },
     applyMute() {
       if (this.game && this.game.sound) {
@@ -141,7 +109,12 @@ export default {
         this.showPause = !this.showPause
         if (this.showPause && this.game) {
           const currentScene = this.game.scene.scenes.find(scene => scene.scene.isActive())
-          if (currentScene) currentScene.scene.pause()
+          if (currentScene) {
+            currentScene.scene.pause()
+            if (this.game.sound) {
+              this.game.sound.stopAll()
+            }
+          }
         } else if (!this.showPause) {
           this.resumeGame()
         }
@@ -151,8 +124,6 @@ export default {
   mounted() {
     this.initGame()
     window.addEventListener('keydown', this.handleKeydown)
-    // Sincronizar mute con ajustes
-    this.isMuted = !this.settings.soundEnabled
   },
   beforeUnmount() {
     this.destroyGame()
